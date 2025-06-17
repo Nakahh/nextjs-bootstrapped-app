@@ -1,0 +1,137 @@
+-- CreateEnum
+CREATE TYPE "TipoImovel" AS ENUM ('CASA', 'APARTAMENTO', 'TERRENO', 'COMERCIAL', 'RURAL');
+
+-- CreateEnum
+CREATE TYPE "StatusImovel" AS ENUM ('DISPONIVEL', 'VENDIDO', 'ALUGADO', 'RESERVADO', 'LANCAMENTO');
+
+-- CreateEnum
+CREATE TYPE "TipoNegocio" AS ENUM ('VENDA', 'ALUGUEL', 'VENDA_ALUGUEL');
+
+-- CreateTable
+CREATE TABLE "Imovel" (
+    "id" TEXT NOT NULL,
+    "titulo" TEXT NOT NULL,
+    "descricao" TEXT NOT NULL,
+    "tipo" "TipoImovel" NOT NULL,
+    "status" "StatusImovel" NOT NULL DEFAULT 'DISPONIVEL',
+    "tipoNegocio" "TipoNegocio" NOT NULL,
+    "precoVenda" DECIMAL(10,2),
+    "precoAluguel" DECIMAL(10,2),
+    "area" INTEGER NOT NULL,
+    "quartos" INTEGER NOT NULL,
+    "suites" INTEGER,
+    "banheiros" INTEGER NOT NULL,
+    "vagas" INTEGER,
+    "mobiliado" BOOLEAN NOT NULL DEFAULT false,
+    "urlAmigavel" TEXT NOT NULL,
+    "destaque" BOOLEAN NOT NULL DEFAULT false,
+    "visualizacoes" INTEGER NOT NULL DEFAULT 0,
+    "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "atualizadoEm" TIMESTAMP(3) NOT NULL,
+    "deletadoEm" TIMESTAMP(3),
+    "corretorId" TEXT,
+
+    CONSTRAINT "Imovel_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Endereco" (
+    "id" TEXT NOT NULL,
+    "cep" TEXT NOT NULL,
+    "logradouro" TEXT NOT NULL,
+    "numero" TEXT,
+    "complemento" TEXT,
+    "bairro" TEXT NOT NULL,
+    "cidade" TEXT NOT NULL,
+    "estado" TEXT NOT NULL,
+    "latitude" DECIMAL(10,8),
+    "longitude" DECIMAL(11,8),
+    "imovelId" TEXT NOT NULL,
+
+    CONSTRAINT "Endereco_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ImagemImovel" (
+    "id" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "legenda" TEXT,
+    "ordem" INTEGER NOT NULL DEFAULT 0,
+    "imovelId" TEXT NOT NULL,
+    "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ImagemImovel_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Caracteristica" (
+    "id" TEXT NOT NULL,
+    "nome" TEXT NOT NULL,
+    "icone" TEXT,
+
+    CONSTRAINT "Caracteristica_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CaracteristicasImovel" (
+    "imovelId" TEXT NOT NULL,
+    "caracteristicaId" TEXT NOT NULL,
+
+    CONSTRAINT "CaracteristicasImovel_pkey" PRIMARY KEY ("imovelId","caracteristicaId")
+);
+
+-- CreateTable
+CREATE TABLE "HistoricoPreco" (
+    "id" TEXT NOT NULL,
+    "imovelId" TEXT NOT NULL,
+    "tipoNegocio" "TipoNegocio" NOT NULL,
+    "valor" DECIMAL(10,2) NOT NULL,
+    "data" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "HistoricoPreco_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Imovel_urlAmigavel_key" ON "Imovel"("urlAmigavel");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Endereco_imovelId_key" ON "Endereco"("imovelId");
+
+-- CreateIndex
+CREATE INDEX "Imovel_tipo_idx" ON "Imovel"("tipo");
+
+-- CreateIndex
+CREATE INDEX "Imovel_status_idx" ON "Imovel"("status");
+
+-- CreateIndex
+CREATE INDEX "Imovel_tipoNegocio_idx" ON "Imovel"("tipoNegocio");
+
+-- CreateIndex
+CREATE INDEX "Imovel_destaque_idx" ON "Imovel"("destaque");
+
+-- CreateIndex
+CREATE INDEX "Imovel_visualizacoes_idx" ON "Imovel"("visualizacoes");
+
+-- CreateIndex
+CREATE INDEX "Endereco_cidade_estado_idx" ON "Endereco"("cidade", "estado");
+
+-- CreateIndex
+CREATE INDEX "Endereco_bairro_idx" ON "Endereco"("bairro");
+
+-- AddForeignKey
+ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_imovelId_fkey" FOREIGN KEY ("imovelId") REFERENCES "Imovel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ImagemImovel" ADD CONSTRAINT "ImagemImovel_imovelId_fkey" FOREIGN KEY ("imovelId") REFERENCES "Imovel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CaracteristicasImovel" ADD CONSTRAINT "CaracteristicasImovel_imovelId_fkey" FOREIGN KEY ("imovelId") REFERENCES "Imovel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CaracteristicasImovel" ADD CONSTRAINT "CaracteristicasImovel_caracteristicaId_fkey" FOREIGN KEY ("caracteristicaId") REFERENCES "Caracteristica"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "HistoricoPreco" ADD CONSTRAINT "HistoricoPreco_imovelId_fkey" FOREIGN KEY ("imovelId") REFERENCES "Imovel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Imovel" ADD CONSTRAINT "Imovel_corretorId_fkey" FOREIGN KEY ("corretorId") REFERENCES "Usuario"("id") ON DELETE SET NULL ON UPDATE CASCADE;
