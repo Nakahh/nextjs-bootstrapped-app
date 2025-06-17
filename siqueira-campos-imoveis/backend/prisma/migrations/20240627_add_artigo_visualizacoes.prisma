@@ -1,0 +1,14 @@
+-- AlterTable
+ALTER TABLE "Artigo" ADD COLUMN "visualizacoes" INTEGER NOT NULL DEFAULT 0;
+
+-- CreateIndex
+CREATE INDEX "Artigo_visualizacoes_idx" ON "Artigo"("visualizacoes");
+
+-- CreateIndex
+CREATE INDEX "Artigo_publicado_idx" ON "Artigo"("publicado");
+
+-- CreateIndex
+CREATE INDEX "Artigo_criadoEm_idx" ON "Artigo"("criadoEm");
+
+-- CreateIndex
+CREATE INDEX "Categoria_nome_idx" ON "Categoria"("nome");
