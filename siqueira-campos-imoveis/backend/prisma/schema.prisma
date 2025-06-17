@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  ADMIN
+  CORRETOR
+  ASSISTENTE
+  CLIENTE
+}
+
+enum StatusVisita {
+  AGENDADA
+  CONFIRMADA
+  REALIZADA
+  CANCELADA
+}
+
+enum StatusLead {
+  NOVO
+  EM_ATENDIMENTO
+  QUALIFICADO
+  CONVERTIDO
+  PERDIDO
+}
+
+enum TipoNotificacao {
+  VISITA
+  PROPOSTA
+  MENSAGEM
+  SISTEMA
+}
+
+enum TipoDocumento {
+  CONTRATO
+  PROPOSTA
+  FICHA_VISITA
+  AVALIACAO
+}
+
+model Usuario {
+  id             Int           @id @default(autoincrement())
+  nome           String
+  email          String        @unique
+  senha          String
+  papel          Papel
+  telefone       String?
+  cpf           String?       @unique
+  creci         String?       @unique
+  avatar        String?
+  criadoEm      DateTime      @default(now())
+  atualizadoEm  DateTime      @updatedAt
+  imoveis       Imovel[]      @relation("ImoveisDoUsuario")
+  favoritos     Favorito[]
+  visitas       Visita[]
+  comissoes     Comissao[]
+  leads         Lead[]
+  notificacoes  Notificacao[]
+  mensagens     Mensagem[]    @relation("MensagensEnviadas")
+  mensagensRecebidas Mensagem[] @relation("MensagensRecebidas")
+  documentos    Documento[]
+}
+
+model Imovel {
+  id              Int       @id @default(autoincrement())
+  titulo          String
+  descricao       String
+  endereco        String
+  cidade          String
+  bairro          String
+  cep             String
+  tipo            String
+  quartos         Int
+  suites         Int
+  vagas          Int
+  area           Float
+  preco          Float
+  status         String
+  destaque       Boolean    @default(false)
+  urlAmigavel    String     @unique
+  metaTitle      String?
+  metaDescription String?
+  tourVirtual    String?
+  latitude       Float?
+  longitude      Float?
+  caracteristicas String[]
+  criadoEm       DateTime   @default(now())
+  atualizadoEm   DateTime   @updatedAt
+  usuarioId      Int
+  usuario        Usuario    @relation(fields: [usuarioId], references: [id], name: "ImoveisDoUsuario")
+  imagens        Imagem[]
+  favoritos      Favorito[]
+  visitas        Visita[]
+  historicoPrecos HistoricoPreco[]
+  propostas      Proposta[]
+  leads          Lead[]
+}
+
+model Imagem {
+  id        Int      @id @default(autoincrement())
+  url       String
+  legenda   String?
+  principal Boolean  @default(false)
+  ordem     Int      @default(0)
+  imovelId  Int
+  imovel    Imovel   @relation(fields: [imovelId], references: [id])
+}
+
+model Favorito {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  imovelId  Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  imovel    Imovel   @relation(fields: [imovelId], references: [id])
+  criadoEm  DateTime @default(now())
+}
+
+model Visita {
+  id          Int         @id @default(autoincrement())
+  usuarioId   Int
+  imovelId    Int
+  dataVisita  DateTime
+  status      StatusVisita
+  observacoes String?
+  criadoEm    DateTime    @default(now())
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id])
+  imovel      Imovel      @relation(fields: [imovelId], references: [id])
+  documento   Documento?
+}
+
+model HistoricoPreco {
+  id        Int      @id @default(autoincrement())
+  imovelId  Int
+  preco     Float
+  data      DateTime @default(now())
+  imovel    Imovel   @relation(fields: [imovelId], references: [id])
+}
+
+model Lead {
+  id           Int        @id @default(autoincrement())
+  nome         String
+  email        String
+  telefone     String
+  status       StatusLead
+  origem       String
+  interesse    String?
+  observacoes  String?
+  imovelId     Int?
+  usuarioId    Int?
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+  imovel       Imovel?    @relation(fields: [imovelId], references: [id])
+  usuario      Usuario?   @relation(fields: [usuarioId], references: [id])
+  interacoes   Interacao[]
+  tags         Tag[]
+}
+
+model Interacao {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  tipo      String
+  conteudo  String
+  criadoEm  DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  cor       String
+  leads     Lead[]
+}
+
+model Artigo {
+  id              Int       @id @default(autoincrement())
+  titulo          String
+  conteudo        String
+  urlAmigavel     String    @unique
+  imagem          String?
+  metaTitle       String?
+  metaDescription String?
+  publicado       Boolean   @default(false)
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+  categorias      Categoria[]
+}
+
+model Categoria {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  artigos   Artigo[]
+}
+
+model Comissao {
+  id           Int      @id @default(autoincrement())
+  usuarioId    Int
+  valor        Float
+  descricao    String
+  status       String
+  dataPagamento DateTime?
+  criadoEm     DateTime @default(now())
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id])
+}
+
+model Notificacao {
+  id        Int             @id @default(autoincrement())
+  usuarioId Int
+  tipo      TipoNotificacao
+  titulo    String
+  conteudo  String
+  lida      Boolean        @default(false)
+  criadoEm  DateTime       @default(now())
+  usuario   Usuario        @relation(fields: [usuarioId], references: [id])
+}
+
+model Mensagem {
+  id            Int      @id @default(autoincrement())
+  remetenteId   Int
+  destinatarioId Int
+  conteudo      String
+  lida          Boolean  @default(false)
+  criadoEm      DateTime @default(now())
+  remetente     Usuario  @relation("MensagensEnviadas", fields: [remetenteId], references: [id])
+  destinatario  Usuario  @relation("MensagensRecebidas", fields: [destinatarioId], references: [id])
+}
+
+model Proposta {
+  id           Int       @id @default(autoincrement())
+  imovelId     Int
+  valor        Float
+  condicoes    String
+  status       String
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  imovel       Imovel    @relation(fields: [imovelId], references: [id])
+  documento    Documento?
+}
+
+model Documento {
+  id           Int       @id @default(autoincrement())
+  tipo         TipoDocumento
+  titulo       String
+  url          String
+  visitaId     Int?      @unique
+  propostaId   Int?      @unique
+  usuarioId    Int
+  criadoEm     DateTime  @default(now())
+  visita       Visita?   @relation(fields: [visitaId], references: [id])
+  proposta     Proposta? @relation(fields: [propostaId], references: [id])
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id])
+}
